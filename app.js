@@ -4,7 +4,8 @@ const bodyParser = require('body-parser')
 const session = require('express-session')
 const flash = require('connect-flash')
 const passport = require('./config/passport')
-const db = require('./models')
+require('./models')
+
 const app = express()
 const port = 3000
 
