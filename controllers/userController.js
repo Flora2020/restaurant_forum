@@ -25,13 +25,14 @@ const userController = {
       errorMsg.push('信箱格式錯誤！')
     }
     if (errorMsg.length > 0) {
-      return res.render('signup', { errorMsg, name, email })
+      req.flash('error_messages', errorMsg)
+      return res.redirect('/signup')
     }
 
     User.findOne({ where: { email } }).then(user => {
       if (user) {
-        errorMsg.push(`${email} 已註冊，請使用其他信箱！`)
-        return res.render('signup', { errorMsg, name })
+        req.flash('error_messages', `${email} 已註冊，請使用其他信箱！`)
+        return res.redirect('/signup')
       }
 
       User.create({
