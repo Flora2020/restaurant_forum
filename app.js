@@ -1,3 +1,4 @@
+const path = require('path')
 const express = require('express')
 const handlebars = require('express-handlebars')
 const bodyParser = require('body-parser')
@@ -13,6 +14,7 @@ const port = 3000
 app.engine('handlebars', handlebars({ defaultLayout: 'main' }))
 app.set('view engine', 'handlebars')
 
+app.use('/upload', express.static(path.join(__dirname, '/upload')))
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(methodOverride('_method'))
 app.use(session({ secret: 'secret', resave: false, saveUninitialized: false }))
