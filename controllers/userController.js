@@ -54,11 +54,11 @@ const userController = {
     // 更換 session id，避免 session fixation attack
     const temp = req.session.passport // {user: 1}
     req.session.regenerate((err) => {
-      console.log(err)
+      if (err) { console.log(err) }
       // req.session.passport is now undefined
       req.session.passport = temp
       req.session.save((err) => {
-        console.log(err)
+        if (err) { console.log(err) }
         req.flash('success_messages', '成功登入！')
         res.redirect('/restaurants')
       })
