@@ -1,5 +1,4 @@
 # README
-
 1. Fork
 2. git clone
 3. 更改專案名稱
@@ -20,7 +19,6 @@ create database forum_test;
 ```
 
 ### 切換環境
-
 ```
 export NODE_ENV=test   # 切換到測試環境，如果在等號後加其他的字串，則會切到其他的環境
 echo $NODE_ENV         # 印出目前使用的環境
@@ -44,7 +42,6 @@ git commit -m "...."
 ```
 
 ## 繳交作業
-
 ```
 git push origin A17           # 上傳本地進度
 ```
