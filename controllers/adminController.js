@@ -3,6 +3,14 @@ const db = require('../models')
 const Restaurant = db.Restaurant
 const User = db.User
 const IMGUR_CLIENT_ID = process.env.IMGUR_CLIENT_ID
+const uploadImg = (path) => {
+  return new Promise((resolve, reject) => {
+    imgur.upload(path, (err, img) => {
+      if (err) { return reject(err) }
+      return resolve(img)
+    })
+  })
+}
 
 const adminController = {
   getRestaurants: (req, res) => {
@@ -15,41 +23,33 @@ const adminController = {
     return res.render('admin/create')
   },
 
-  postRestaurant: (req, res) => {
+  postRestaurant: async (req, res) => {
     if (!req.body.name) {
       req.flash('error_messages', "name didn't exist")
       return res.redirect('back')
     }
 
-    const { file } = req
-    if (file) {
-      imgur.setClientID(IMGUR_CLIENT_ID)
-      imgur.upload(file.path, (err, img) => {
-        if (err) { console.log(err) }
-        return Restaurant.create({
-          name: req.body.name,
-          tel: req.body.tel,
-          address: req.body.address,
-          opening_hours: req.body.opening_hours,
-          description: req.body.description,
-          image: file ? img.data.link : null
-        }).then((restaurant) => {
-          req.flash('success_messages', 'restaurant was successfully created')
-          return res.redirect('/admin/restaurants')
-        })
-      })
-    } else {
-      return Restaurant.create({
+    try {
+      const { file } = req
+      let img
+
+      if (file) {
+        imgur.setClientID(IMGUR_CLIENT_ID)
+        img = await uploadImg(file.path)
+      }
+
+      await Restaurant.create({
         name: req.body.name,
         tel: req.body.tel,
         address: req.body.address,
         opening_hours: req.body.opening_hours,
         description: req.body.description,
-        image: null
-      }).then((restaurant) => {
-        req.flash('success_messages', 'restaurant was successfully created')
-        return res.redirect('/admin/restaurants')
+        image: file ? img.data.link : null
       })
+      req.flash('success_messages', 'restaurant was successfully created')
+      return res.redirect('/admin/restaurants')
+    } catch (err) {
+      console.log(err)
     }
   },
 
@@ -65,49 +65,34 @@ const adminController = {
     })
   },
 
-  putRestaurant: (req, res) => {
+  putRestaurant: async (req, res) => {
     if (!req.body.name) {
       req.flash('error_messages', "name didn't exist")
       return res.redirect('back')
     }
 
-    const { file } = req
-    if (file) {
-      imgur.setClientID(IMGUR_CLIENT_ID)
-      imgur.upload(file.path, (err, img) => {
-        if (err) { console.log(err) }
-        return Restaurant.findByPk(req.params.id)
-          .then((restaurant) => {
-            restaurant.update({
-              name: req.body.name,
-              tel: req.body.tel,
-              address: req.body.address,
-              opening_hours: req.body.opening_hours,
-              description: req.body.description,
-              image: file ? img.data.link : restaurant.image
-            })
-              .then((restaurant) => {
-                req.flash('success_messages', 'restaurant was successfully to update')
-                res.redirect('/admin/restaurants')
-              })
-          })
+    try {
+      const { file } = req
+      let img
+
+      if (file) {
+        imgur.setClientID(IMGUR_CLIENT_ID)
+        img = await uploadImg(file.path)
+      }
+
+      const restaurant = await Restaurant.findByPk(req.params.id)
+      await restaurant.update({
+        name: req.body.name,
+        tel: req.body.tel,
+        address: req.body.address,
+        opening_hours: req.body.opening_hours,
+        description: req.body.description,
+        image: file ? img.data.link : restaurant.image
       })
-    } else {
-      return Restaurant.findByPk(req.params.id)
-        .then((restaurant) => {
-          restaurant.update({
-            name: req.body.name,
-            tel: req.body.tel,
-            address: req.body.address,
-            opening_hours: req.body.opening_hours,
-            description: req.body.description,
-            image: restaurant.image
-          })
-            .then((restaurant) => {
-              req.flash('success_messages', 'restaurant was successfully to update')
-              res.redirect('/admin/restaurants')
-            })
-        })
+      req.flash('success_messages', 'restaurant was successfully to update')
+      res.redirect('/admin/restaurants')
+    } catch (err) {
+      console.log(err)
     }
   },
 
