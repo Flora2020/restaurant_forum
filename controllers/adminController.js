@@ -1,6 +1,7 @@
 const imgur = require('imgur-node-api')
 const db = require('../models')
 const Restaurant = db.Restaurant
+const User = db.User
 const IMGUR_CLIENT_ID = process.env.IMGUR_CLIENT_ID
 
 const adminController = {
@@ -119,6 +120,27 @@ const adminController = {
             res.redirect('/admin/restaurants')
           })
       })
+  },
+
+  getUsers: async (req, res) => {
+    try {
+      const users = await User.findAll({ raw: true })
+      return res.render('admin/users', { users })
+    } catch (err) {
+      console.log(err)
+    }
+  },
+
+  toggleAdmin: async (req, res) => {
+    try {
+      const id = req.params.id
+      const user = await User.findByPk(id)
+      user.isAdmin = !user.isAdmin
+      await user.save()
+      return res.redirect('/admin/users')
+    } catch (err) {
+      console.log(err)
+    }
   }
 }
 
