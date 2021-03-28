@@ -122,6 +122,7 @@ const adminController = {
       const user = await User.findByPk(id)
       user.isAdmin = !user.isAdmin
       await user.save()
+      req.flash('success_messages', '使用者權限已更新！')
       return res.redirect('/admin/users')
     } catch (err) {
       console.log(err)
