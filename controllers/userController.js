@@ -69,6 +69,18 @@ const userController = {
     req.flash('success_messages', '登出成功！')
     req.logout()
     res.redirect('/signin')
+  },
+
+  getUser: (req, res) => {
+    if (req.user.id.toString() !== req.params.id) {
+      req.flash('error_messages', '只能查看自己的 profile！')
+      return res.redirect(`/users/${req.user.id}`)
+    }
+    return res.render('users/user')
+  },
+
+  editUser: (req, res) => {
+    return res.send('This will be an edit page.')
   }
 }
 
