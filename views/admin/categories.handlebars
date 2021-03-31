@@ -1,5 +1,17 @@
 {{>adminLayout}}
 <div class="d-flex align-items-center p-3 my-3 text-white-50 bg-purple rounded shadow-sm">
+  {{#if category}}
+  <form action="/admin/categories/{{category.id}}?_method=PUT" method="POST">
+    <div class="input-group">
+      <input class="form-control" type="text" placeholder="Category Name" name="name" value="{{category.name}}"
+        required>
+      <div class="input-group-append">
+        <button class="btn btn-primary" type="submit">Update</button><a href="/admin/categories" class="btn btn-link">or
+          Create New</a>
+      </div>
+    </div>
+  </form>
+  {{else}}
   <form action="/admin/categories" method="POST">
     <div class="input-group">
       <input class="form-control" type="text" placeholder="Category Name" name="name" required>
@@ -8,6 +20,7 @@
       </div>
     </div>
   </form>
+  {{/if}}
 </div>
 <br />
 <br />
