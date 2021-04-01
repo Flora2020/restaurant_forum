@@ -11,6 +11,33 @@
 </ul>
 <br />
 
+<nav aria-label="Page navigation">
+  <ul class="pagination justify-content-center">
+
+    <li class="page-item {{#ifCond prev 1}}disabled{{/ifCond}}">
+      <a class="page-link" href="/restaurants?page={{prev}}&categoryId={{categoryId}}" aria-label="Previous">
+        <span aria-hidden="true">&laquo;</span>
+      </a>
+    </li>
+    {{#each totalPage}}
+    {{#ifCond this ../page}}
+    <li class="page-item active"><a class="page-link" href="#">{{this}}</a></li>
+    {{else}}
+    <li class="page-item"><a class="page-link"
+        href="/restaurants?page={{this}}&categoryId={{../categoryId}}">{{this}}</a></li>
+    {{/ifCond}}
+    {{/each}}
+    <li class="page-item {{#ifCond next pages}}disabled{{/ifCond}}">
+      <a class="page-link" href="/restaurants?page={{next}}&categoryId={{categoryId}}" aria-label="Next">
+        <span aria-hidden="true">&raquo;</span>
+      </a>
+    </li>
+
+  </ul>
+</nav>
+
+<br />
+
 <div class="row">
   {{#each restaurants}}
   <div class="col-md-4">
@@ -31,3 +58,27 @@
 </div>
 <br />
 <br />
+<nav aria-label="Page navigation">
+  <ul class="pagination justify-content-center">
+
+    <li class="page-item {{#ifCond prev 1}}disabled{{/ifCond}}">
+      <a class="page-link" href="/restaurants?page={{prev}}&categoryId={{categoryId}}" aria-label="Previous">
+        <span aria-hidden="true">&laquo;</span>
+      </a>
+    </li>
+    {{#each totalPage}}
+    {{#ifCond this ../page}}
+    <li class="page-item active"><a class="page-link" href="#">{{this}}</a></li>
+    {{else}}
+    <li class="page-item"><a class="page-link"
+        href="/restaurants?page={{this}}&categoryId={{../categoryId}}">{{this}}</a></li>
+    {{/ifCond}}
+    {{/each}}
+    <li class="page-item {{#ifCond next pages}}disabled{{/ifCond}}">
+      <a class="page-link" href="/restaurants?page={{next}}&categoryId={{categoryId}}" aria-label="Next">
+        <span aria-hidden="true">&raquo;</span>
+      </a>
+    </li>
+
+  </ul>
+</nav>
