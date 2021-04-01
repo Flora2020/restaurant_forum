@@ -1,6 +1,8 @@
 const db = require('../models')
 const Restaurant = db.Restaurant
 const Category = db.Category
+const User = db.User
+const Comment = db.Comment
 
 const restController = {
   getRestaurants: async (req, res) => {
@@ -54,7 +56,10 @@ const restController = {
 
   getRestaurant: (req, res) => {
     const id = req.params.id
-    return Restaurant.findByPk(id, { include: [Category] })
+    return Restaurant.findByPk(
+      id,
+      { include: [Category, { model: Comment, include: [User] }] }
+    )
       .then(restaurant => {
         if (!restaurant) {
           req.flash('error_messages', '查無此餐廳')

@@ -18,10 +18,26 @@
   <div class="col-md-8">
     <p>{{restaurant.description}}</p>
   </div>
-  <hr>
 </div>
 
 <hr>
+{{#if restaurant.Comments}}
+<br />
+<h3>所有評論：</h3>
+{{#each restaurant.Comments}}
+<blockquote class="blockquote mb-0">
+  <h4><a href="/users/{{this.User.id}}">{{this.User.name}}</a></h4>
+  <p>{{this.text}}</p>
+  <footer class="blockquote-footer">{{this.createdAt}}</footer>
+</blockquote>
+<hr>
+{{/each}}
+{{else}}
+<br />
+<h3>目前尚無評論</h3>
+{{/if}}
+<br />
+
 <form action="/comments" method="POST">
   <div class="form-group">
     <label for="text">留下評論：</label>
