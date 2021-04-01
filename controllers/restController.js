@@ -17,6 +17,21 @@ const restController = {
         console.log(error)
         return res.render('error')
       })
+  },
+
+  getRestaurant: (req, res) => {
+    const id = req.params.id
+    return Restaurant.findByPk(id, { include: [Category] })
+      .then(restaurant => {
+        if (!restaurant) {
+          req.flash('error_messages', '查無此餐廳')
+        }
+        res.render('restaurant', { restaurant: restaurant.toJSON() })
+      })
+      .catch(error => {
+        console.log(error)
+        return res.render('error')
+      })
   }
 }
 module.exports = restController
