@@ -3,20 +3,31 @@ const Restaurant = db.Restaurant
 const Category = db.Category
 
 const restController = {
-  getRestaurants: (req, res) => {
-    Restaurant.findAll({ raw: true, nest: true, include: [Category] })
-      .then(restaurants => {
-        const data = restaurants.map((restaurant) => ({
-          ...restaurant,
-          description: restaurant.description.substring(0, 50),
-          categoryName: restaurant.Category.name
-        }))
-        return res.render('restaurants', { restaurants: data })
+  getRestaurants: async (req, res) => {
+    try {
+      const whereQuery = {}
+      let categoryId = ''
+      if (req.query.categoryId) {
+        categoryId = Number(req.query.categoryId)
+        whereQuery.CategoryId = categoryId
+      }
+      const restaurants = await Restaurant.findAll({
+        raw: true,
+        nest: true,
+        include: [Category],
+        where: whereQuery
       })
-      .catch(error => {
-        console.log(error)
-        return res.render('error')
-      })
+      const categories = await Category.findAll({ raw: true, nest: true })
+      const data = restaurants.map((restaurant) => ({
+        ...restaurant,
+        description: restaurant.description.substring(0, 50),
+        categoryName: restaurant.Category.name
+      }))
+      return res.render('restaurants', { restaurants: data, categories, categoryId })
+    } catch (error) {
+      console.log(error)
+      return res.render('error')
+    }
   },
 
   getRestaurant: (req, res) => {
