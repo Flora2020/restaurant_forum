@@ -30,6 +30,24 @@ const commentController = {
         console.log(error)
         return res.render('error')
       })
+  },
+
+  deleteComment: (req, res) => {
+    return Comment.findByPk(req.params.id)
+      .then((comment) => {
+        if (!comment) {
+          req.flash('error_messages', '查無此評論！')
+          return res.redirect('back')
+        }
+        comment.destroy()
+          .then(() => {
+            return res.redirect(`/restaurants/${comment.RestaurantId}`)
+          })
+          .catch(error => {
+            console.log(error)
+            return res.render('error')
+          })
+      })
   }
 }
 
