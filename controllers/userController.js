@@ -71,12 +71,25 @@ const userController = {
     res.redirect('/signin')
   },
 
-  getUser: (req, res) => {
-    if (req.user.id.toString() !== req.params.id) {
-      req.flash('error_messages', '只能查看自己的 profile！')
-      return res.redirect(`/users/${req.user.id}`)
+  getUser: async (req, res) => {
+    try {
+      const queryId = req.params.id
+      const queryUser = {}
+      const user = req.user.id.toString() === queryId ? req.user : await User.findByPk(queryId, { raw: true })
+
+      if (!user) {
+        req.flash('error_messages', '查無此使用者！')
+        return res.redirect(`/users/${req.user.id}`)
+      }
+      queryUser.id = user.id
+      queryUser.name = user.name
+      queryUser.email = user.email
+      queryUser.image = user.image
+      return res.render('users/user', { queryUser })
+    } catch (error) {
+      console.log(error)
+      return res.render('error')
     }
-    return res.render('users/user')
   },
 
   editUser: (req, res) => {

@@ -1,7 +1,13 @@
 <div class="row">
+  <col-12 class="col-md-4">
+    <img class="img-responsive center-block rounded-circle" src="{{queryUser.image}}" alt="user avatar"
+      style="width: 250px;margin-bottom: 25px;">
+  </col-12>
   <div class="col-12 col-md-8">
-    <p class="font-weight-bold">{{user.name}}</p>
-    <p>{{user.email}}</p>
+    <p class="font-weight-bold">{{queryUser.name}}</p>
+    <p>{{queryUser.email}}</p>
+    {{#ifCond queryUser.id user.id}}
     <a href="/users/{{user.id}}/edit" class="btn btn-primary">edit</a>
+    {{/ifCond}}
   </div>
 </div>
