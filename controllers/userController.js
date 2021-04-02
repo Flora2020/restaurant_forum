@@ -75,7 +75,7 @@ const userController = {
     try {
       const queryId = req.params.id
       const queryUser = {}
-      const user = req.user.id.toString() === queryId ? req.user : await User.findByPk(queryId, { raw: true })
+      const user = await User.findByPk(queryId, { raw: true })
 
       if (!user) {
         req.flash('error_messages', '查無此使用者！')
