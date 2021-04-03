@@ -1,7 +1,18 @@
 const bcrypt = require('bcryptjs')
+const validator = require('validator')
+const imgur = require('imgur-node-api')
 const helpers = require('../_helpers')
 const db = require('../models')
 const User = db.User
+const IMGUR_CLIENT_ID = process.env.IMGUR_CLIENT_ID
+const uploadImg = (path) => {
+  return new Promise((resolve, reject) => {
+    imgur.upload(path, (err, img) => {
+      if (err) { return reject(err) }
+      return resolve(img)
+    })
+  })
+}
 
 const userController = {
   signUpPage: (req, res) => {
@@ -109,6 +120,58 @@ const userController = {
 
         return res.render('users/edit', { user: user.toJSON() })
       })
+  },
+
+  putUser: async (req, res) => {
+    try {
+      const id = req.params.id
+      const self = helpers.getUser(req)
+      const { file } = req
+      const { name } = req.body
+      const userInput = [{ name }]
+      const errorMsg = []
+      let img
+
+      if (id !== self.id.toString()) {
+        errorMsg.push('只能編輯自己的 profile！')
+      }
+      if (!name) {
+        errorMsg.push("name didn't exist")
+      }
+      if (!validator.isByteLength(name, { min: 1, max: 255 })) {
+        errorMsg.push('name cannot be longer than 255 bytes!')
+      }
+
+      if (errorMsg.length > 0) {
+        req.flash('error_messages', errorMsg)
+        req.flash('user_input', userInput)
+        return res.redirect(`/users/${self.id}/edit`)
+      }
+
+      if (file) {
+        const validExtensions = ['.jpg', '.jpeg', '.png']
+        const fileExtension = file.originalname.substring(file.originalname.lastIndexOf('.'))
+        if (validExtensions.indexOf(fileExtension) < 0) {
+          req.flash('error_messages', '只接受 .jpg, .jpeg, .png 檔')
+          req.flash('user_input', userInput)
+          return res.redirect(`/users/${self.id}/edit`)
+        }
+
+        imgur.setClientID(IMGUR_CLIENT_ID)
+        img = await uploadImg(file.path)
+      }
+
+      const user = await User.findByPk(id)
+      await user.update({
+        name: name,
+        image: file ? img.data.link : user.image
+      })
+
+      return res.redirect(`/users/${self.id}`)
+    } catch (error) {
+      console.log(error)
+      return res.render('error')
+    }
   },
 
   editPassword: (req, res) => {
