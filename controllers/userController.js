@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs')
 const validator = require('validator')
+const PasswordValidator = require('password-validator')
 const imgur = require('imgur-node-api')
 const helpers = require('../_helpers')
 const db = require('../models')
@@ -13,6 +14,14 @@ const uploadImg = (path) => {
     })
   })
 }
+
+const schema = new PasswordValidator()
+schema
+  .has().uppercase()
+  .has().lowercase()
+  .has().digits()
+  .has().symbols()
+  .has().not().spaces()
 
 const userController = {
   signUpPage: (req, res) => {
@@ -183,6 +192,58 @@ const userController = {
     }
 
     return res.render('users/password')
+  },
+
+  putPassword: async (req, res) => {
+    try {
+      const id = req.params.id
+      const self = helpers.getUser(req)
+      const { oldPassword, newPassword, confirmPassword } = req.body
+      const errorMsg = []
+      if (id !== self.id.toString()) {
+        errorMsg.push('只能更改自己的密碼！')
+      }
+      if (!oldPassword || !newPassword || !confirmPassword) {
+        errorMsg.push('請輸入所有必填欄位！')
+      }
+      if (
+        !validator.isByteLength(newPassword, { min: 8, max: 255 }) ||
+        !validator.isByteLength(oldPassword, { min: 8, max: 255 })
+      ) {
+        errorMsg.push('密碼長度須為 8 至 255 位元!')
+      }
+      if (newPassword !== confirmPassword) {
+        errorMsg.push('新密碼與確認密碼不符！')
+      }
+      if (!schema.validate(newPassword)) {
+        errorMsg.push('新密碼強度不足！')
+      }
+      if (oldPassword === newPassword) {
+        errorMsg.push('新密碼與舊密碼相同！')
+      }
+      if (errorMsg.length > 0) {
+        req.flash('error_messages', errorMsg)
+        return res.redirect(`/users/${self.id}/password`)
+      }
+
+      const user = await User.findByPk(id)
+      const isMatch = await bcrypt.compare(oldPassword, user.password)
+      if (!isMatch) {
+        req.flash('error_messages', '舊密碼錯誤！')
+        return res.redirect(`/users/${self.id}/password`)
+      }
+
+      await user.update({
+        password: bcrypt.hashSync(newPassword, bcrypt.genSaltSync(10))
+      })
+
+      req.flash('success_messages', '密碼更新成功，請重新登入！')
+      req.logout()
+      return res.redirect('/signin')
+    } catch (error) {
+      console.log(error)
+      return res.render('error')
+    }
   }
 }
 
