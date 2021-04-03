@@ -5,6 +5,8 @@ const imgur = require('imgur-node-api')
 const helpers = require('../_helpers')
 const db = require('../models')
 const User = db.User
+const Comment = db.Comment
+const Restaurant = db.Restaurant
 const IMGUR_CLIENT_ID = process.env.IMGUR_CLIENT_ID
 const uploadImg = (path) => {
   return new Promise((resolve, reject) => {
@@ -96,17 +98,27 @@ const userController = {
     try {
       const queryId = req.params.id
       const queryUser = {}
-      const user = await User.findByPk(queryId, { raw: true })
-
+      const user = await User.findByPk(queryId, {
+        raw: true,
+        nest: true,
+        include: [{ model: Comment, include: [Restaurant] }]
+      })
+      const comments = await Comment.findAndCountAll({
+        raw: true,
+        nest: true,
+        where: { UserId: queryId },
+        include: [Restaurant]
+      })
       if (!user) {
         req.flash('error_messages', '查無此使用者！')
         return res.redirect(`/users/${req.user.id}`)
       }
+
       queryUser.id = user.id
       queryUser.name = user.name
       queryUser.email = user.email
       queryUser.image = user.image
-      return res.render('users/user', { queryUser })
+      return res.render('users/user', { queryUser, commentNumber: comments.count, comments: comments.rows })
     } catch (error) {
       console.log(error)
       return res.render('error')
