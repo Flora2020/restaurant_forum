@@ -1,4 +1,5 @@
 const bcrypt = require('bcryptjs')
+const helpers = require('../_helpers')
 const db = require('../models')
 const User = db.User
 
@@ -93,7 +94,32 @@ const userController = {
   },
 
   editUser: (req, res) => {
-    return res.send('This will be an edit page.')
+    const id = req.params.id
+    const self = helpers.getUser(req)
+    if (id !== self.id.toString()) {
+      req.flash('error_messages', '只能編輯自己的 profile！')
+      return res.redirect(`/users/${self.id}/edit`)
+    }
+    User.findByPk(id)
+      .then((user) => {
+        if (!user) {
+          req.flash('error_messages', '查無此使用者')
+          return res.redirect('/restaurants')
+        }
+
+        return res.render('users/edit', { user: user.toJSON() })
+      })
+  },
+
+  editPassword: (req, res) => {
+    const id = req.params.id
+    const self = helpers.getUser(req)
+    if (id !== self.id.toString()) {
+      req.flash('error_messages', '只能更改自己的密碼！')
+      return res.redirect(`/users/${self.id}/password`)
+    }
+
+    return res.render('users/password')
   }
 }
 

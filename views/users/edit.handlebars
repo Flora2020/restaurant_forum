@@ -1,0 +1,16 @@
+<form action="/users/{{user.id}}?_method=PUT" method="POST" enctype="multipart/form-data">
+  <div class="form-group">
+    <label for="name">Name</label>
+    <input type="text" class="form-control" name="name" id="name" placeholder="Enter name" value="{{user.name}}"
+      maxlength="255" autofocus required>
+  </div>
+
+  <div class="form-group">
+    <label for="image">Image (.jpg, .jpeg, .png)</label>
+    <input type="file" class="form-control-file" id="image" name="image" accept=".jpg,.jpeg,.png">
+  </div>
+
+  <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+<br />
+<a href="/users/{{user.id}}/password" class="btn btn-info">Change Password</a>
