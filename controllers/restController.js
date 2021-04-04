@@ -65,6 +65,7 @@ const restController = {
         if (!restaurant) {
           req.flash('error_messages', '查無此餐廳')
         }
+        restaurant.increment('viewCounts')
         res.render('restaurant', { restaurant: restaurant.toJSON() })
       })
       .catch(error => {
