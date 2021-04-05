@@ -31,7 +31,8 @@ const restController = {
       const data = restaurants.rows.map((restaurant) => ({
         ...restaurant,
         description: restaurant.description.substring(0, 50),
-        categoryName: restaurant.Category.name
+        categoryName: restaurant.Category.name,
+        isFavorited: helpers.getUser(req).FavoritedRestaurantId.includes(restaurant.id)
       }))
 
       const pages = Math.ceil(restaurants.count / pageLimit)
