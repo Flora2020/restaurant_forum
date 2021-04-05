@@ -1,5 +1,6 @@
 const validator = require('validator')
 const db = require('../models')
+const helpers = require('../_helpers')
 const Restaurant = db.Restaurant
 const Category = db.Category
 const User = db.User
@@ -60,14 +61,22 @@ const restController = {
     const id = req.params.id
     return Restaurant.findByPk(
       id,
-      { include: [Category, { model: Comment, include: [User] }] }
+      {
+        include: [
+          Category,
+          { model: Comment, include: [User] },
+          { model: User, as: 'FavoritedUsers' }
+        ]
+      }
     )
       .then(restaurant => {
         if (!restaurant) {
           req.flash('error_messages', '查無此餐廳')
         }
+
+        const isFavorited = restaurant.FavoritedUsers.map(d => d.id).includes(helpers.getUser(req).id)
         restaurant.increment('viewCounts')
-        res.render('restaurant', { restaurant: restaurant.toJSON() })
+        res.render('restaurant', { restaurant: restaurant.toJSON(), isFavorited })
       })
       .catch(error => {
         console.log(error)
