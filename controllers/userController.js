@@ -7,6 +7,7 @@ const db = require('../models')
 const User = db.User
 const Comment = db.Comment
 const Restaurant = db.Restaurant
+const Favorite = db.Favorite
 const IMGUR_CLIENT_ID = process.env.IMGUR_CLIENT_ID
 const uploadImg = (path) => {
   return new Promise((resolve, reject) => {
@@ -256,6 +257,38 @@ const userController = {
       console.log(error)
       return res.render('error')
     }
+  },
+
+  addFavorite: (req, res, next) => {
+    return Favorite.create({
+      UserId: helpers.getUser(req).id,
+      RestaurantId: req.params.restaurantId
+    })
+      .then((restaurant) => {
+        return res.redirect('back')
+      })
+      .catch((error) => next(error))
+  },
+
+  removeFavorite: (req, res, next) => {
+    return Favorite.findOne({
+      where: {
+        UserId: helpers.getUser(req).id,
+        RestaurantId: req.params.restaurantId
+      }
+    })
+      .then((favorite) => {
+        if (!favorite) {
+          req.flash('error_messages', '查無此筆最愛紀錄！')
+          return res.redirect('back')
+        }
+        favorite.destroy()
+          .then((restaurant) => {
+            return res.redirect('back')
+          })
+          .catch((error) => next(error))
+      })
+      .catch((error) => next(error))
   }
 }
 
