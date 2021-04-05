@@ -18,6 +18,7 @@ const adminController = {
     return Restaurant.findAll({
       raw: true,
       nest: true,
+      order: [['updatedAt', 'DESC']],
       include: [Category]
     }).then(restaurants => {
       return res.render('admin/restaurants', { restaurants })
