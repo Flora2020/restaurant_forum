@@ -8,6 +8,7 @@ const User = db.User
 const Comment = db.Comment
 const Restaurant = db.Restaurant
 const Favorite = db.Favorite
+const Like = db.Like
 const IMGUR_CLIENT_ID = process.env.IMGUR_CLIENT_ID
 const uploadImg = (path) => {
   return new Promise((resolve, reject) => {
@@ -280,6 +281,48 @@ const userController = {
       .then((favorite) => {
         if (!favorite) {
           req.flash('error_messages', '查無此筆最愛紀錄！')
+          return res.redirect('back')
+        }
+        favorite.destroy()
+          .then((restaurant) => {
+            return res.redirect('back')
+          })
+          .catch((error) => next(error))
+      })
+      .catch((error) => next(error))
+  },
+
+  toLike: (req, res, next) => {
+    const restaurantId = req.params.restaurantId
+    if (!validator.isNumeric(restaurantId, { no_symbols: true })) {
+      req.flash('error_messages', '查無此餐廳！')
+      return res.redirect('back')
+    }
+    return Like.create({
+      UserId: helpers.getUser(req).id,
+      RestaurantId: restaurantId
+    })
+      .then((restaurant) => {
+        return res.redirect('back')
+      })
+      .catch((error) => next(error))
+  },
+
+  toUnlike: (req, res, next) => {
+    const restaurantId = req.params.restaurantId
+    if (!validator.isNumeric(restaurantId, { no_symbols: true })) {
+      req.flash('error_messages', '查無此餐廳！')
+      return res.redirect('back')
+    }
+    return Like.findOne({
+      where: {
+        UserId: helpers.getUser(req).id,
+        RestaurantId: restaurantId
+      }
+    })
+      .then((favorite) => {
+        if (!favorite) {
+          req.flash('error_messages', '查無此筆 Like 紀錄！')
           return res.redirect('back')
         }
         favorite.destroy()

@@ -13,6 +13,12 @@ const restController = {
       const page = Number(req.query.page) || 1
       const offset = (page - 1) * pageLimit
       const whereQuery = {}
+      const user = (await User.findByPk(helpers.getUser(req).id, {
+        include: [
+          { model: Restaurant, as: 'FavoritedRestaurants' },
+          { model: Restaurant, as: 'LikedRestaurants' }
+        ]
+      })).toJSON()
       let categoryId = ''
 
       if (req.query.categoryId) {
@@ -28,12 +34,14 @@ const restController = {
         limit: pageLimit,
         offset
       })
+
       const categories = await Category.findAll({ raw: true, nest: true })
       const data = restaurants.rows.map((restaurant) => ({
         ...restaurant,
         description: restaurant.description.substring(0, 50),
         categoryName: restaurant.Category.name,
-        isFavorited: helpers.getUser(req).FavoritedRestaurantId.includes(restaurant.id)
+        isFavorited: user.FavoritedRestaurants.map(restaurant => restaurant.id).includes(restaurant.id),
+        isLiked: user.LikedRestaurants.map(restaurant => restaurant.id).includes(restaurant.id)
       }))
 
       const pages = Math.ceil(restaurants.count / pageLimit)
@@ -65,7 +73,8 @@ const restController = {
         include: [
           Category,
           { model: Comment, include: [User] },
-          { model: User, as: 'FavoritedUsers' }
+          { model: User, as: 'FavoritedUsers' },
+          { model: User, as: 'LikedUsers' }
         ]
       }
     )
@@ -75,8 +84,9 @@ const restController = {
         }
 
         const isFavorited = restaurant.FavoritedUsers.map(d => d.id).includes(helpers.getUser(req).id)
+        const isLiked = restaurant.LikedUsers.map(d => d.id).includes(helpers.getUser(req).id)
         restaurant.increment('viewCounts')
-        res.render('restaurant', { restaurant: restaurant.toJSON(), isFavorited })
+        res.render('restaurant', { restaurant: restaurant.toJSON(), isFavorited, isLiked })
       })
       .catch(error => {
         console.log(error)
