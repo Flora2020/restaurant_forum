@@ -1,3 +1,4 @@
+const validator = require('validator')
 const imgur = require('imgur-node-api')
 const db = require('../models')
 const Category = db.Category
@@ -33,8 +34,34 @@ const adminController = {
   },
 
   postRestaurant: async (req, res) => {
-    if (!req.body.name) {
-      req.flash('error_messages', "name didn't exist")
+    const { name, tel, address, opening_hours, description, categoryId } = req.body
+    const telRule = /^\([0-9]{2}\)([0-9]{4}|[0-9]{3})-[0-9]{4}$/
+    const timeRule = /^([0-1][0-9]|[2][0-3]):[0-5][0-9]/
+    const categoryIds = (await Category.findAll({ raw: true })).map(category => category.id.toString())
+    const errorMsg = []
+    if (!name) {
+      errorMsg.push("Name didn't exist!")
+    }
+    if (!validator.isByteLength(name, { max: 255 })) {
+      errorMsg.push('Name cannot be longer than 255 bytes!')
+    }
+    if (tel && !telRule.test(tel)) {
+      errorMsg.push('Wrong telephone number format!')
+    }
+    if (!validator.isByteLength(address, { max: 255 })) {
+      errorMsg.push('Address cannot be longer than 255 bytes!')
+    }
+    if (opening_hours && !timeRule.test(opening_hours)) {
+      errorMsg.push('Wrong opening hours format!')
+    }
+    if (!validator.isByteLength(description, { max: 65535 })) {
+      errorMsg.push('Description cannot be longer than 65535 bytes!')
+    }
+    if (!categoryIds.includes(categoryId)) {
+      errorMsg.push('No such category!')
+    }
+    if (errorMsg.length > 0) {
+      req.flash('error_messages', errorMsg)
       return res.redirect('back')
     }
 
@@ -43,18 +70,24 @@ const adminController = {
       let img
 
       if (file) {
+        const validExtensions = ['.jpg', '.jpeg', '.png']
+        const fileExtension = file.originalname.substring(file.originalname.lastIndexOf('.'))
+        if (validExtensions.indexOf(fileExtension) < 0) {
+          req.flash('error_messages', 'Only jpg jpeg png files are accepted!')
+          return res.redirect('back')
+        }
         imgur.setClientID(IMGUR_CLIENT_ID)
         img = await uploadImg(file.path)
       }
 
       await Restaurant.create({
-        name: req.body.name,
-        tel: req.body.tel,
-        address: req.body.address,
-        opening_hours: req.body.opening_hours,
-        description: req.body.description,
+        name,
+        tel,
+        address,
+        opening_hours,
+        description,
         image: file ? img.data.link : null,
-        CategoryId: req.body.categoryId
+        CategoryId: categoryId
       })
       req.flash('success_messages', 'restaurant was successfully created')
       return res.redirect('/admin/restaurants')
@@ -64,7 +97,12 @@ const adminController = {
   },
 
   getRestaurant: (req, res) => {
-    return Restaurant.findByPk(req.params.id, {
+    const id = req.params.id
+    if (!validator.isNumeric(id, { no_symbols: true })) {
+      req.flash('error_messages', '查無此餐廳！')
+      return res.redirect('/admin/restaurants')
+    }
+    return Restaurant.findByPk(id, {
       include: [Category]
     }).then(restaurant => {
       return res.render('admin/restaurant', { restaurant: restaurant.toJSON() })
@@ -72,7 +110,12 @@ const adminController = {
   },
 
   editRestaurant: (req, res) => {
-    return Restaurant.findByPk(req.params.id).then(restaurant => {
+    const id = req.params.id
+    if (!validator.isNumeric(id, { no_symbols: true })) {
+      req.flash('error_messages', '查無此餐廳！')
+      return res.redirect('/admin/restaurants')
+    }
+    return Restaurant.findByPk(id).then(restaurant => {
       Category.findAll({ raw: true }).then(categories => {
         return res.render('admin/create', { restaurant: restaurant.toJSON(), categories })
       })
@@ -80,8 +123,40 @@ const adminController = {
   },
 
   putRestaurant: async (req, res) => {
-    if (!req.body.name) {
-      req.flash('error_messages', "name didn't exist")
+    const id = req.params.id
+    if (!validator.isNumeric(id, { no_symbols: true })) {
+      req.flash('error_messages', '查無此餐廳！')
+      return res.redirect('/admin/restaurants')
+    }
+
+    const { name, tel, address, opening_hours, description, categoryId } = req.body
+    const telRule = /^\([0-9]{2}\)([0-9]{4}|[0-9]{3})-[0-9]{4}$/
+    const timeRule = /^([0-1][0-9]|[2][0-3]):[0-5][0-9]/
+    const categoryIds = (await Category.findAll({ raw: true })).map(category => category.id.toString())
+    const errorMsg = []
+    if (!name) {
+      errorMsg.push("Name didn't exist!")
+    }
+    if (!validator.isByteLength(name, { max: 255 })) {
+      errorMsg.push('Name cannot be longer than 255 bytes!')
+    }
+    if (tel && !telRule.test(tel)) {
+      errorMsg.push('Wrong telephone number format!')
+    }
+    if (!validator.isByteLength(address, { max: 255 })) {
+      errorMsg.push('Address cannot be longer than 255 bytes!')
+    }
+    if (opening_hours && !timeRule.test(opening_hours)) {
+      errorMsg.push('Wrong opening hours format!')
+    }
+    if (!validator.isByteLength(description, { max: 65535 })) {
+      errorMsg.push('Description cannot be longer than 65535 bytes!')
+    }
+    if (!categoryIds.includes(categoryId)) {
+      errorMsg.push('No such category!')
+    }
+    if (errorMsg.length > 0) {
+      req.flash('error_messages', errorMsg)
       return res.redirect('back')
     }
 
@@ -90,11 +165,17 @@ const adminController = {
       let img
 
       if (file) {
+        const validExtensions = ['.jpg', '.jpeg', '.png']
+        const fileExtension = file.originalname.substring(file.originalname.lastIndexOf('.'))
+        if (validExtensions.indexOf(fileExtension) < 0) {
+          req.flash('error_messages', 'Only jpg jpeg png files are accepted!')
+          return res.redirect('back')
+        }
         imgur.setClientID(IMGUR_CLIENT_ID)
         img = await uploadImg(file.path)
       }
 
-      const restaurant = await Restaurant.findByPk(req.params.id)
+      const restaurant = await Restaurant.findByPk(id)
       await restaurant.update({
         name: req.body.name,
         tel: req.body.tel,
@@ -105,14 +186,19 @@ const adminController = {
         CategoryId: req.body.categoryId
       })
       req.flash('success_messages', 'restaurant was successfully to update')
-      res.redirect('/admin/restaurants')
+      res.redirect(`/admin/restaurants/${id}`)
     } catch (err) {
       console.log(err)
     }
   },
 
   deleteRestaurant: (req, res) => {
-    return Restaurant.findByPk(req.params.id)
+    const id = req.params.id
+    if (!validator.isNumeric(id, { no_symbols: true })) {
+      req.flash('error_messages', '查無此餐廳！')
+      return res.redirect('/admin/restaurants')
+    }
+    return Restaurant.findByPk(id)
       .then((restaurant) => {
         restaurant.destroy()
           .then((restaurant) => {
@@ -134,6 +220,11 @@ const adminController = {
   toggleAdmin: async (req, res) => {
     try {
       const id = req.params.id
+      if (!validator.isNumeric(id, { no_symbols: true })) {
+        req.flash('error_messages', '查無此使用者！')
+        return res.redirect('/admin/users')
+      }
+
       const user = await User.findByPk(id)
       user.isAdmin = !user.isAdmin
       await user.save()
