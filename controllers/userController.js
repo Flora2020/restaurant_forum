@@ -332,6 +332,27 @@ const userController = {
           .catch((error) => next(error))
       })
       .catch((error) => next(error))
+  },
+
+  getTopUser: async (req, res, next) => {
+    try {
+      const self = await User.findByPk(helpers.getUser(req).id, {
+        include: [{ model: User, as: 'Followings' }]
+      })
+      let users = await User.findAll({
+        include: [{ model: User, as: 'Followers' }]
+      })
+
+      users = users.map(user => ({
+        ...user.dataValues,
+        FollowerCount: user.Followers.length,
+        isFollowed: self.Followings.map(following => following.id).includes(user.dataValues.id)
+      }))
+      users = users.sort((a, b) => b.FollowerCount - a.FollowerCount)
+      return res.render('topUser', { users })
+    } catch (error) {
+      next(error)
+    }
   }
 }
 
