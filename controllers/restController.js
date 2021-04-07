@@ -136,6 +136,32 @@ const restController = {
       console.log(error)
       return res.render('error')
     }
+  },
+
+  getTopRestaurants: async (req, res, next) => {
+    try {
+      const self = helpers.getUser(req)
+      const restaurantNumber = 10
+      const user = await User.findByPk(self.id, {
+        include: [{ model: Restaurant, as: 'FavoritedRestaurants' }]
+      })
+      let restaurants = await Restaurant.findAll({
+        include: [Category, { model: User, as: 'FavoritedUsers' }]
+      })
+
+      restaurants = restaurants.map(restaurant => ({
+        ...restaurant.dataValues,
+        description: restaurant.dataValues.description.substring(0, 50),
+        Category: restaurant.dataValues.Category.dataValues,
+        favoritedCount: restaurant.FavoritedUsers.length,
+        isFavorited: user.FavoritedRestaurants.map(item => item.id).includes(restaurant.dataValues.id)
+      }))
+      restaurants = restaurants.sort((a, b) => b.favoritedCount - a.favoritedCount)
+      restaurants = restaurants.slice(0, restaurantNumber)
+      return res.render('topRestaurant', { restaurants })
+    } catch (error) {
+      next(error)
+    }
   }
 }
 module.exports = restController
