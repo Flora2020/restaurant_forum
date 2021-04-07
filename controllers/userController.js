@@ -9,6 +9,7 @@ const Comment = db.Comment
 const Restaurant = db.Restaurant
 const Favorite = db.Favorite
 const Like = db.Like
+const Followship = db.Followship
 const IMGUR_CLIENT_ID = process.env.IMGUR_CLIENT_ID
 const uploadImg = (path) => {
   return new Promise((resolve, reject) => {
@@ -349,10 +350,43 @@ const userController = {
         isFollowed: self.Followings.map(following => following.id).includes(user.dataValues.id)
       }))
       users = users.sort((a, b) => b.FollowerCount - a.FollowerCount)
-      return res.render('topUser', { users })
+      return res.render('topUser', { users, selfId: self.id })
     } catch (error) {
       next(error)
     }
+  },
+
+  addFollowing: (req, res, next) => {
+    const self = helpers.getUser(req)
+    if (self.id.toString() === req.params.userId) {
+      req.flash('error_messages', '無法自己追蹤自己！')
+      return res.redirect('/users/top')
+    }
+    return Followship.create({
+      followerId: self.id,
+      followingId: req.params.userId
+    })
+      .then((followship) => {
+        return res.redirect('back')
+      })
+      .catch(error => next(error))
+  },
+
+  removeFollowing: (req, res, next) => {
+    return Followship.findOne({
+      where: {
+        followerId: helpers.getUser(req).id,
+        followingId: req.params.userId
+      }
+    })
+      .then((followship) => {
+        followship.destroy()
+          .then((followship) => {
+            return res.redirect('back')
+          })
+          .catch(error => next(error))
+      })
+      .catch(error => next(error))
   }
 }
 

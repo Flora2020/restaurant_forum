@@ -20,6 +20,8 @@
     </a>
     <h2>{{this.name}}</h2>
     <span class="badge badge-secondary">追蹤人數：{{this.FollowerCount}}</span>
+    {{#ifCond this.id ../selfId}}
+    {{else}}
     <p>
       {{#if this.isFollowed}}
     <form action="/following/{{this.id}}?_method=DELETE" method="POST" style="display: contents;">
@@ -31,6 +33,7 @@
     </form>
     {{/if}}
     </p>
+    {{/ifCond}}
   </div>
   {{/each}}
 </div>
