@@ -97,34 +97,69 @@ const userController = {
     res.redirect('/signin')
   },
 
-  getUser: async (req, res) => {
+  getUser: async (req, res, next) => {
     try {
       const queryId = req.params.id
-      const queryUser = {}
-      const user = await User.findByPk(queryId, {
-        raw: true,
-        nest: true,
-        include: [{ model: Comment, include: [Restaurant] }]
-      })
-      const comments = await Comment.findAndCountAll({
-        raw: true,
-        nest: true,
-        where: { UserId: queryId },
-        include: [Restaurant]
-      })
-      if (!user) {
+      if (!validator.isNumeric(queryId, { no_symbols: true })) {
         req.flash('error_messages', '查無此使用者！')
         return res.redirect(`/users/${req.user.id}`)
       }
 
-      queryUser.id = user.id
-      queryUser.name = user.name
-      queryUser.email = user.email
-      queryUser.image = user.image
-      return res.render('users/user', { queryUser, commentNumber: comments.count, comments: comments.rows })
+      const selfId = helpers.getUser(req).id
+      const user = await User.findByPk(queryId, {
+        include: [
+          { model: Comment, include: [Restaurant] },
+          { model: Restaurant, as: 'FavoritedRestaurants' },
+          { model: User, as: 'Followings' },
+          { model: User, as: 'Followers' }
+        ]
+      })
+
+      if (!user) {
+        req.flash('error_messages', '查無此使用者！')
+        return res.redirect(`/users/${req.user.id}`)
+      }
+      const followings = user.Followings.map(following => ({
+        id: following.dataValues.id,
+        image: following.dataValues.image
+      }))
+      const followers = user.Followers.map(follower => ({
+        id: follower.dataValues.id,
+        image: follower.dataValues.image
+      }))
+      let commentedRestaurants = user.Comments.map(comment => ({
+        id: comment.Restaurant.dataValues.id,
+        image: comment.Restaurant.dataValues.image
+      }))
+      commentedRestaurants = commentedRestaurants.sort((a, b) => b.id - a.id)
+      for (let i = commentedRestaurants.length - 1; i > 0; i--) {
+        if (commentedRestaurants[i].id === commentedRestaurants[i - 1].id) {
+          commentedRestaurants.splice(i, 1)
+        }
+      }
+
+      const queryUser = {
+        id: user.dataValues.id,
+        name: user.dataValues.name,
+        email: user.dataValues.email,
+        image: user.dataValues.image,
+        commentedRestaurantCount: commentedRestaurants.length,
+        commentedRestaurants: commentedRestaurants,
+        favoriteRestaurantCount: user.FavoritedRestaurants.length,
+        favoriteRestaurant: user.FavoritedRestaurants.map(restaurant => ({
+          id: restaurant.dataValues.id,
+          image: restaurant.dataValues.image
+        })),
+        followingCount: followings.length,
+        followings: followings,
+        followerCount: followers.length,
+        followers: followers,
+        isFollowed: followers.map(follower => follower.id).includes(selfId)
+      }
+
+      return res.render('users/user', { queryUser, selfId })
     } catch (error) {
-      console.log(error)
-      return res.render('error')
+      next(error)
     }
   },
 

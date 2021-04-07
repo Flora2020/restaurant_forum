@@ -1,20 +1,101 @@
 <div class="row">
-  <div class="col-md-4">
-    <img class="img-responsive center-block rounded-circle" src="{{queryUser.image}}" alt="user avatar"
-      style="width: 250px;margin-bottom: 25px;">
+  <div class="col-12 col-md-4 mb-3">
+    <img class="" src="{{queryUser.image}}" alt="user avatar" style="max-width: 230px;">
   </div>
-  <div class="col-12 col-md-8 bg-white">
-    <p class="font-weight-bold">{{queryUser.name}}</p>
-    <p>{{queryUser.email}}</p>
-    <p><strong>{{commentNumber}}</strong> 已評論餐廳</p>
-    {{#ifCond queryUser.id user.id}}
-    <a href="/users/{{user.id}}/edit" class="btn btn-primary">edit</a>
-    {{/ifCond}}
-  </div>
-</div>
-<br />
+  <div class="col-12 col-md-8  mb-3">
+    <div class="bg-white p-4 border">
+      <p class="font-weight-bold">{{queryUser.name}}</p>
+      <p>{{queryUser.email}}</p>
+      <p>
+        <strong>{{queryUser.commentedRestaurantCount}}</strong> 已評論餐廳<br />
+        <strong>{{queryUser.favoriteRestaurantCount}}</strong> 收藏的餐廳<br />
+        <strong>{{queryUser.followingCount}}</strong> followings（追蹤者）<br />
+        <strong>{{queryUser.followerCount}}</strong> followers（追隨者）
+      </p>
 
-<div class="row">
+      {{#ifCond queryUser.id selfId}}
+      <a href="/users/{{selfId}}/edit" class="btn btn-primary">edit</a>
+      {{else}}
+      {{#if queryUser.isFollowed}}
+      <form action="/following/{{queryUser.id}}?_method=DELETE" method="POST" style="display: contents;">
+        <button type="submit" class="btn btn-danger">取消追蹤</button>
+      </form>
+      {{else}}
+      <form action="/following/{{queryUser.id}}" method="POST" style="display: contents;">
+        <button type="submit" class="btn btn-primary">追蹤</button>
+      </form>
+      {{/if}}
+      {{/ifCond}}
+    </div>
+  </div>
+
+  <div class="col-12 col-md-4 mb-3">
+    <div class="card">
+      <div class="card-header">
+        <strong>{{queryUser.followingCount}}</strong> followings（追蹤者）
+      </div>
+      <div class="card-body">
+        {{#each queryUser.followings}}
+        <a href="/users/{{this.id}}">
+          <img class="img-responsive center-block mb-3 mr-3" src="{{this.image}}" alt="following avatar"
+            style="height: 100px;">
+        </a>
+        {{/each}}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-md-8 mb-3">
+    <div class="card">
+      <div class="card-header">
+        <strong>{{queryUser.commentedRestaurantCount}}</strong> 已評論餐廳
+      </div>
+      <div class="card-body">
+        {{#each queryUser.commentedRestaurants}}
+        <a href="/restaurants/{{this.id}}">
+          <img class="img-responsive center-block mb-3 mr-3" src="{{this.image}}" alt="following avatar"
+            style="height: 100px;">
+        </a>
+        {{/each}}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-md-4 mb-3">
+    <div class="card">
+      <div class="card-header">
+        <strong>{{queryUser.followerCount}}</strong> followers（追隨者）
+      </div>
+      <div class="card-body">
+        {{#each queryUser.followers}}
+        <a href="/users/{{this.id}}">
+          <img class="img-responsive center-block mb-3 mr-3" src="{{this.image}}" alt="following avatar"
+            style="height: 100px;">
+        </a>
+        {{/each}}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-md-8 mb-3">
+    <div class="card">
+      <div class="card-header">
+        <strong>{{queryUser.favoriteRestaurantCount}}</strong> 收藏的餐廳
+      </div>
+      <div class="card-body">
+        {{#each queryUser.favoriteRestaurant}}
+        <a href="/restaurants/{{this.id}}">
+          <img class="img-responsive center-block mb-3 mr-3" src="{{this.image}}" alt="following avatar"
+            style="height: 100px;">
+        </a>
+        {{/each}}
+      </div>
+    </div>
+  </div>
+
+</div>
+
+{{!-- <div class="row">
   <div class="col-12 bg-secondary text-white">
     <p class="mb-0 py-2"><strong>{{commentNumber}}</strong> 已評論餐廳</p>
   </div>
@@ -30,4 +111,4 @@
     <p>{{this.text}}</p>
   </div>
   {{/each}}
-</div>
+</div> --}}
