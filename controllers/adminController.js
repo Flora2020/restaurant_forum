@@ -92,16 +92,9 @@ const adminController = {
     }
   },
 
-  getRestaurant: (req, res) => {
-    const id = req.params.id
-    if (!validator.isNumeric(id, { no_symbols: true })) {
-      req.flash('error_messages', '查無此餐廳！')
-      return res.redirect('/admin/restaurants')
-    }
-    return Restaurant.findByPk(id, {
-      include: [Category]
-    }).then(restaurant => {
-      return res.render('admin/restaurant', { restaurant: restaurant.toJSON() })
+  getRestaurant: (req, res, next) => {
+    adminService.getRestaurant(req, res, next, (data) => {
+      return res.render('admin/restaurant', data)
     })
   },
 
