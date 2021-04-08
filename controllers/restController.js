@@ -125,13 +125,28 @@ const restController = {
         req.flash('error_messages', '查無此餐廳！')
         return res.redirect('/restaurants')
       }
-      const restaurant = (await Restaurant.findByPk(id, { include: [Category] })).toJSON()
-      const commentsCount = await Comment.count({ where: { RestaurantId: id } })
+      let restaurant = (await Restaurant.findByPk(id, {
+        include: [Category, { model: User, as: 'FavoritedUsers' }]
+      })).toJSON()
+      const commentCount = await Comment.count({ where: { RestaurantId: id } })
       if (!restaurant) {
         req.flash('error_messages', '查無此餐廳！')
         return res.redirect('/restaurants')
       }
-      return res.render('dashboard', { restaurant, commentsCount })
+
+      restaurant = {
+        name: restaurant.name,
+        categoryName: restaurant.Category.name,
+        commentCount,
+        viewCounts: restaurant.viewCounts,
+        favoritedUserCount: restaurant.FavoritedUsers.length,
+        favoritedUser: restaurant.FavoritedUsers.map(user => ({
+          id: user.id,
+          image: user.image
+        }))
+      }
+
+      return res.render('dashboard', { restaurant })
     } catch (error) {
       console.log(error)
       return res.render('error')
