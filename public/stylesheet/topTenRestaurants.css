@@ -1,0 +1,10 @@
+#top-ten-restaurants {
+  margin: 0 auto;
+}
+
+@media screen and (min-width: 400px) {
+  #top-ten-restaurants {
+    width: 400px;
+  }
+
+}
