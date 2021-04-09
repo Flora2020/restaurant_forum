@@ -32,6 +32,32 @@ const adminService = {
         callback(data)
       })
       .catch(error => next(error))
+  },
+
+  deleteRestaurant: (req, res, callback) => {
+    const id = req.params.id
+    if (!validator.isNumeric(id, { no_symbols: true })) {
+      const data = { status: 'error', statusCode: 400, message: ['Invalid ID format.'] }
+      return callback(data)
+    }
+    return Restaurant.findByPk(id)
+      .then((restaurant) => {
+        restaurant.destroy()
+          .then((restaurant) => {
+            const data = { status: 'success', statusCode: 200, message: ['Restaurant was successfully deleted.'] }
+            return callback(data)
+          })
+          .catch(error => {
+            console.log(error)
+            const data = { status: 'error', statusCode: 500, message: [error.toString()] }
+            callback(data)
+          })
+      })
+      .catch(error => {
+        console.log(error)
+        const data = { status: 'error', statusCode: 500, message: [error.toString()] }
+        callback(data)
+      })
   }
 }
 

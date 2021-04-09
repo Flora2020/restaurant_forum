@@ -182,19 +182,17 @@ const adminController = {
   },
 
   deleteRestaurant: (req, res) => {
-    const id = req.params.id
-    if (!validator.isNumeric(id, { no_symbols: true })) {
-      req.flash('error_messages', '查無此餐廳！')
+    adminService.deleteRestaurant(req, res, (data) => {
+      if (data.status === 'success') {
+        req.flash('success_messages', data.message)
+        return res.redirect('/admin/restaurants')
+      }
+      if (data.statusCode === 500) {
+        return res.render('error')
+      }
+      req.flash('error_messages', data.message)
       return res.redirect('/admin/restaurants')
-    }
-    return Restaurant.findByPk(id)
-      .then((restaurant) => {
-        restaurant.destroy()
-          .then((restaurant) => {
-            req.flash('success_messages', 'restaurant was successfully deleted')
-            res.redirect('/admin/restaurants')
-          })
-      })
+    })
   },
 
   getUsers: async (req, res) => {
