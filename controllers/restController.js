@@ -169,7 +169,7 @@ const restController = {
       const self = helpers.getUser(req)
       const restaurantNumber = 10
       const restaurants = await Restaurant.findAll({
-        include: [Category, { model: User, as: 'FavoritedUsers' }],
+        include: [{ model: User, as: 'FavoritedUsers' }],
         attributes: {
           include: [
             [
@@ -192,7 +192,6 @@ const restController = {
       for (let i = 0; i < restaurants.length; i++) {
         const restaurant = {
           ...restaurants[i].dataValues,
-          Category: restaurants[i].dataValues.Category.dataValues,
           favoritedCount: restaurants[i].FavoritedUsers.length,
           isFavorited: restaurants[i].FavoritedUsers.map(user => user.dataValues.id).includes(self.id)
         }

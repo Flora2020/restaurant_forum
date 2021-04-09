@@ -28,7 +28,6 @@
           </a>
         </p>
         <span class="badge badge-secondary">最愛人數：{{this.favoritedCount}}</span>
-        <span class="badge badge-secondary">{{this.Category.name}}</span>
         <p class="card-text">{{this.description}}</p>
         {{#if this.isFavorited}}
         <form action="/favorite/{{this.id}}?_method=DELETE" method="POST" style="display: contents;">
