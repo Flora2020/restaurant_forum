@@ -5,6 +5,7 @@ const Restaurant = db.Restaurant
 const Category = db.Category
 const User = db.User
 const Comment = db.Comment
+const sequelize = db.sequelize
 
 const restController = {
   getRestaurants: async (req, res) => {
@@ -167,21 +168,33 @@ const restController = {
     try {
       const self = helpers.getUser(req)
       const restaurantNumber = 10
-      const user = await User.findByPk(self.id, {
-        include: [{ model: Restaurant, as: 'FavoritedRestaurants' }]
-      })
-      let restaurants = await Restaurant.findAll({
-        include: [Category, { model: User, as: 'FavoritedUsers' }]
+      const restaurants = await Restaurant.findAll({
+        include: [Category, { model: User, as: 'FavoritedUsers' }],
+        attributes: {
+          include: [
+            [
+              sequelize.literal(`(
+                SELECT COUNT(*)
+                FROM favorites AS favorite
+                WHERE favorite.RestaurantId = Restaurant.id
+                GROUP BY favorite.RestaurantId
+              )`),
+              'favoritedUserCount'
+            ]
+          ]
+        },
+        order: [
+          [sequelize.literal('favoritedUserCount'), 'DESC']
+        ],
+        limit: restaurantNumber
       })
 
-      restaurants = restaurants.sort((a, b) => b.FavoritedUsers.length - a.FavoritedUsers.length)
-      restaurants = restaurants.slice(0, restaurantNumber)
       for (let i = 0; i < restaurants.length; i++) {
         const restaurant = {
           ...restaurants[i].dataValues,
           Category: restaurants[i].dataValues.Category.dataValues,
           favoritedCount: restaurants[i].FavoritedUsers.length,
-          isFavorited: user.FavoritedRestaurants.map(item => item.id).includes(restaurants[i].dataValues.id)
+          isFavorited: restaurants[i].FavoritedUsers.map(user => user.dataValues.id).includes(self.id)
         }
         const description = restaurants[i].dataValues.description
         if (description) {
@@ -189,6 +202,7 @@ const restController = {
         }
         restaurants[i] = restaurant
       }
+
       return res.render('topRestaurant', { restaurants })
     } catch (error) {
       next(error)
