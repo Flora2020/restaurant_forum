@@ -9,9 +9,9 @@ const Comment = db.Comment
 const restController = {
   getRestaurants: async (req, res) => {
     try {
-      const pageLimit = 12
+      const restaurantsPerPage = 12
       const page = Number(req.query.page) || 1
-      const offset = (page - 1) * pageLimit
+      const offset = (page - 1) * restaurantsPerPage
       const whereQuery = {}
       const user = (await User.findByPk(helpers.getUser(req).id, {
         include: [
@@ -31,20 +31,27 @@ const restController = {
         nest: true,
         include: [Category],
         where: whereQuery,
-        limit: pageLimit,
+        limit: restaurantsPerPage,
         offset
       })
 
       const categories = await Category.findAll({ raw: true, nest: true })
-      const data = restaurants.rows.map((restaurant) => ({
-        ...restaurant,
-        description: restaurant.description.substring(0, 50),
-        categoryName: restaurant.Category.name,
-        isFavorited: user.FavoritedRestaurants.map(restaurant => restaurant.id).includes(restaurant.id),
-        isLiked: user.LikedRestaurants.map(restaurant => restaurant.id).includes(restaurant.id)
-      }))
+      const data = []
+      for (let i = 0; i < restaurants.rows.length; i++) {
+        const restaurant = {
+          ...restaurants.rows[i],
+          categoryName: restaurants.rows[i].Category.name,
+          isFavorited: user.FavoritedRestaurants.map(restaurant => restaurant.id).includes(restaurants.rows[i].id),
+          isLiked: user.LikedRestaurants.map(restaurant => restaurant.id).includes(restaurants.rows[i].id)
+        }
+        const description = restaurants.rows[i].description
+        if (description) {
+          restaurant.description = description.length > 47 ? description.substring(0, 47) + '...' : description
+        }
+        data.push(restaurant)
+      }
 
-      const pages = Math.ceil(restaurants.count / pageLimit)
+      const pages = Math.ceil(restaurants.count / restaurantsPerPage)
       const totalPage = Array.from({ length: pages }).map((item, index) => index + 1)
       const prevPage = page - 1 < 1 ? 1 : page - 1
       const nextPage = page + 1 > pages ? pages : pages + 1
@@ -167,15 +174,21 @@ const restController = {
         include: [Category, { model: User, as: 'FavoritedUsers' }]
       })
 
-      restaurants = restaurants.map(restaurant => ({
-        ...restaurant.dataValues,
-        description: restaurant.dataValues.description.substring(0, 50),
-        Category: restaurant.dataValues.Category.dataValues,
-        favoritedCount: restaurant.FavoritedUsers.length,
-        isFavorited: user.FavoritedRestaurants.map(item => item.id).includes(restaurant.dataValues.id)
-      }))
-      restaurants = restaurants.sort((a, b) => b.favoritedCount - a.favoritedCount)
+      restaurants = restaurants.sort((a, b) => b.FavoritedUsers.length - a.FavoritedUsers.length)
       restaurants = restaurants.slice(0, restaurantNumber)
+      for (let i = 0; i < restaurants.length; i++) {
+        const restaurant = {
+          ...restaurants[i].dataValues,
+          Category: restaurants[i].dataValues.Category.dataValues,
+          favoritedCount: restaurants[i].FavoritedUsers.length,
+          isFavorited: user.FavoritedRestaurants.map(item => item.id).includes(restaurants[i].dataValues.id)
+        }
+        const description = restaurants[i].dataValues.description
+        if (description) {
+          restaurant.description = description.length > 47 ? description.substring(0, 47) + '...' : description
+        }
+        restaurants[i] = restaurant
+      }
       return res.render('topRestaurant', { restaurants })
     } catch (error) {
       next(error)
