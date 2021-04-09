@@ -36,10 +36,11 @@ const adminController = {
         return res.redirect('/admin/restaurants')
       }
       if (data.statusCode === 400) {
-        req.flash('error_messages', data.message)
-        return res.redirect('back')
+        const errorMsg = data.message
+        return res.render('admin/create', { errorMsg, userInput: data.userInput, categories: data.categories })
       }
-      return res.render('error')
+      const errorMsg = ['Sorry, something went wrong. Please try again later.']
+      return res.render('admin/create', { errorMsg, userInput: data.userInput, categories: data.categories })
     })
   },
 
@@ -72,32 +73,33 @@ const adminController = {
     const { name, tel, address, opening_hours, description, categoryId } = req.body
     const telRule = /^\([0-9]{2}\)([0-9]{4}|[0-9]{3})-[0-9]{4}$/
     const timeRule = /^([0-1][0-9]|[2][0-3]):[0-5][0-9]/
-    const categoryIds = (await Category.findAll({ raw: true })).map(category => category.id.toString())
+    const categories = await Category.findAll({ raw: true })
+    const categoryIds = categories.map(category => category.id.toString())
     const errorMsg = []
+    const userInput = { name, tel, address, opening_hours, description, categoryId: Number(categoryId) }
     if (!name) {
-      errorMsg.push("Name didn't exist!")
+      errorMsg.push("Name didn't exist.")
     }
     if (!validator.isByteLength(name, { max: 255 })) {
-      errorMsg.push('Name cannot be longer than 255 bytes!')
+      errorMsg.push('Name cannot be longer than 255 bytes.')
     }
     if (tel && !telRule.test(tel)) {
-      errorMsg.push('Wrong telephone number format!')
+      errorMsg.push('Wrong telephone number format.')
     }
     if (!validator.isByteLength(address, { max: 255 })) {
-      errorMsg.push('Address cannot be longer than 255 bytes!')
+      errorMsg.push('Address cannot be longer than 255 bytes.')
     }
     if (opening_hours && !timeRule.test(opening_hours)) {
-      errorMsg.push('Wrong opening hours format!')
+      errorMsg.push('Wrong opening hours format.')
     }
     if (!validator.isByteLength(description, { max: 65535 })) {
-      errorMsg.push('Description cannot be longer than 65535 bytes!')
+      errorMsg.push('Description cannot be longer than 65535 bytes.')
     }
     if (!categoryIds.includes(categoryId)) {
-      errorMsg.push('No such category!')
+      errorMsg.push('No such category.')
     }
     if (errorMsg.length > 0) {
-      req.flash('error_messages', errorMsg)
-      return res.redirect('back')
+      return res.render('admin/create', { errorMsg, userInput, categories, restaurant: { id } })
     }
 
     try {
@@ -108,8 +110,8 @@ const adminController = {
         const validExtensions = ['.jpg', '.jpeg', '.png']
         const fileExtension = file.originalname.substring(file.originalname.lastIndexOf('.'))
         if (validExtensions.indexOf(fileExtension) < 0) {
-          req.flash('error_messages', 'Only jpg jpeg png files are accepted!')
-          return res.redirect('back')
+          errorMsg.push('Only jpg jpeg png files are accepted.')
+          return res.render('admin/create', { errorMsg, userInput, categories, restaurant: { id } })
         }
         imgur.setClientID(IMGUR_CLIENT_ID)
         img = await uploadImg(file.path)
@@ -129,6 +131,8 @@ const adminController = {
       res.redirect(`/admin/restaurants/${id}`)
     } catch (err) {
       console.log(err)
+      errorMsg.push('Sorry, something went wrong. Please try again later.')
+      return res.render('admin/create', { errorMsg, userInput, categories, restaurant: { id } })
     }
   },
 

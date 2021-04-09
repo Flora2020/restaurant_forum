@@ -32,8 +32,10 @@ const adminService = {
     const { name, tel, address, opening_hours, description, categoryId } = req.body
     const telRule = /^\([0-9]{2}\)([0-9]{4}|[0-9]{3})-[0-9]{4}$/
     const timeRule = /^([0-1][0-9]|[2][0-3]):[0-5][0-9]/
-    const categoryIds = (await Category.findAll({ raw: true })).map(category => category.id.toString())
+    const categories = await Category.findAll({ raw: true })
+    const categoryIds = categories.map(category => category.id.toString())
     const errorMsg = []
+    const userInput = { name, tel, address, opening_hours, description, categoryId: Number(categoryId) }
     if (!name) {
       errorMsg.push("Name didn't exist.")
     }
@@ -56,7 +58,7 @@ const adminService = {
       errorMsg.push('No such category.')
     }
     if (errorMsg.length > 0) {
-      const data = { status: 'error', statusCode: 400, message: errorMsg }
+      const data = { status: 'error', statusCode: 400, message: errorMsg, userInput, categories }
       return callback(data)
     }
 
@@ -68,7 +70,7 @@ const adminService = {
         const validExtensions = ['.jpg', '.jpeg', '.png']
         const fileExtension = file.originalname.substring(file.originalname.lastIndexOf('.'))
         if (validExtensions.indexOf(fileExtension) < 0) {
-          const data = { status: 'error', statusCode: 400, message: ['Only jpg jpeg png files are accepted.'] }
+          const data = { status: 'error', statusCode: 400, message: ['Only jpg jpeg png files are accepted.'], userInput, categories }
           return callback(data)
         }
         imgur.setClientID(IMGUR_CLIENT_ID)
@@ -88,7 +90,7 @@ const adminService = {
       return callback(data)
     } catch (error) {
       console.log(error)
-      const data = { status: 'error', statusCode: 500, message: [error.toString()] }
+      const data = { status: 'error', statusCode: 500, message: [error.toString()], userInput, categories }
       return callback(data)
     }
   },

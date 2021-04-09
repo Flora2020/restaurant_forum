@@ -50,6 +50,14 @@
         {{/each}}
         {{/if}}
 
+        {{#if errorMsg}}
+        {{#each errorMsg}}
+        <div class="alert alert-danger" role="alert" style="margin: 30px 0 ;">
+          {{this}}
+        </div>
+        {{/each}}
+        {{/if}}
+
         {{{body}}}
       </div>
     </div>
