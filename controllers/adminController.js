@@ -29,67 +29,18 @@ const adminController = {
       })
   },
 
-  postRestaurant: async (req, res) => {
-    const { name, tel, address, opening_hours, description, categoryId } = req.body
-    const telRule = /^\([0-9]{2}\)([0-9]{4}|[0-9]{3})-[0-9]{4}$/
-    const timeRule = /^([0-1][0-9]|[2][0-3]):[0-5][0-9]/
-    const categoryIds = (await Category.findAll({ raw: true })).map(category => category.id.toString())
-    const errorMsg = []
-    if (!name) {
-      errorMsg.push("Name didn't exist!")
-    }
-    if (!validator.isByteLength(name, { max: 255 })) {
-      errorMsg.push('Name cannot be longer than 255 bytes!')
-    }
-    if (tel && !telRule.test(tel)) {
-      errorMsg.push('Wrong telephone number format!')
-    }
-    if (!validator.isByteLength(address, { max: 255 })) {
-      errorMsg.push('Address cannot be longer than 255 bytes!')
-    }
-    if (opening_hours && !timeRule.test(opening_hours)) {
-      errorMsg.push('Wrong opening hours format!')
-    }
-    if (!validator.isByteLength(description, { max: 65535 })) {
-      errorMsg.push('Description cannot be longer than 65535 bytes!')
-    }
-    if (!categoryIds.includes(categoryId)) {
-      errorMsg.push('No such category!')
-    }
-    if (errorMsg.length > 0) {
-      req.flash('error_messages', errorMsg)
-      return res.redirect('back')
-    }
-
-    try {
-      const { file } = req
-      let img
-
-      if (file) {
-        const validExtensions = ['.jpg', '.jpeg', '.png']
-        const fileExtension = file.originalname.substring(file.originalname.lastIndexOf('.'))
-        if (validExtensions.indexOf(fileExtension) < 0) {
-          req.flash('error_messages', 'Only jpg jpeg png files are accepted!')
-          return res.redirect('back')
-        }
-        imgur.setClientID(IMGUR_CLIENT_ID)
-        img = await uploadImg(file.path)
+  postRestaurant: (req, res) => {
+    adminService.postRestaurant(req, res, (data) => {
+      if (data.status === 'success') {
+        req.flash('success_messages', data.message)
+        return res.redirect('/admin/restaurants')
       }
-
-      await Restaurant.create({
-        name,
-        tel,
-        address,
-        opening_hours,
-        description,
-        image: file ? img.data.link : null,
-        CategoryId: categoryId
-      })
-      req.flash('success_messages', 'restaurant was successfully created')
-      return res.redirect('/admin/restaurants')
-    } catch (err) {
-      console.log(err)
-    }
+      if (data.statusCode === 400) {
+        req.flash('error_messages', data.message)
+        return res.redirect('back')
+      }
+      return res.render('error')
+    })
   },
 
   getRestaurant: (req, res, next) => {
