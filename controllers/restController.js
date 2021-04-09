@@ -146,13 +146,12 @@ const restController = {
         include: [{ model: Restaurant, as: 'FavoritedRestaurants' }]
       })
       let restaurants = await Restaurant.findAll({
-        include: [Category, { model: User, as: 'FavoritedUsers' }]
+        include: [{ model: User, as: 'FavoritedUsers' }]
       })
 
       restaurants = restaurants.map(restaurant => ({
         ...restaurant.dataValues,
         description: restaurant.dataValues.description.substring(0, 50),
-        Category: restaurant.dataValues.Category.dataValues,
         favoritedCount: restaurant.FavoritedUsers.length,
         isFavorited: user.FavoritedRestaurants.map(item => item.id).includes(restaurant.dataValues.id)
       }))
