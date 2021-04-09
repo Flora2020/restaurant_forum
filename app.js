@@ -35,6 +35,8 @@ app.use((req, res, next) => {
   res.locals.error_messages = req.flash('error_messages')
   res.locals.user_input = req.flash('user_input')
   res.locals.user = helpers.getUser(req)
+
+  req.session.viewedRestaurant = req.session.viewedRestaurant || []
   next()
 })
 

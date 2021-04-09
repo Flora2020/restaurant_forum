@@ -85,7 +85,10 @@ const restController = {
 
         const isFavorited = restaurant.FavoritedUsers.map(d => d.id).includes(helpers.getUser(req).id)
         const isLiked = restaurant.LikedUsers.map(d => d.id).includes(helpers.getUser(req).id)
-        restaurant.increment('viewCounts')
+        if (!req.session.viewedRestaurant.includes(id)) {
+          restaurant.increment('viewCounts')
+          req.session.viewedRestaurant.push(id)
+        }
         res.render('restaurant', { restaurant: restaurant.toJSON(), isFavorited, isLiked })
       })
       .catch(error => {
