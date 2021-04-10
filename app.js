@@ -32,12 +32,16 @@ app.use(passport.session())
 app.use(flash())
 
 app.use((req, res, next) => {
+  req.session.userInput = req.session.userInput || null
+  req.session.viewedRestaurant = req.session.viewedRestaurant || []
+
   res.locals.success_messages = req.flash('success_messages')
   res.locals.error_messages = req.flash('error_messages')
   res.locals.user_input = req.flash('user_input')
+  res.locals.userInput = req.session.userInput
   res.locals.user = helpers.getUser(req)
 
-  req.session.viewedRestaurant = req.session.viewedRestaurant || []
+  req.session.userInput = null
   next()
 })
 
