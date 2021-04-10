@@ -1,6 +1,4 @@
 const categoryService = require('../services/categoryService')
-const db = require('../models')
-const Category = db.Category
 
 const categoryController = {
   getCategories: (req, res, next) => {
@@ -47,16 +45,18 @@ const categoryController = {
   },
 
   deleteCategory: (req, res) => {
-    const id = req.params.id
-    Category.findByPk(id)
-      .then(category => {
-        category.destroy()
+    categoryService.deleteCategory(req, res, (data) => {
+      if (data.status === 'success') {
+        req.flash('success_messages', data.message)
         return res.redirect('/admin/categories')
-      })
-      .catch(error => {
-        console.log(error)
-        return res.render('error')
-      })
+      }
+      if (data.statusCode < 500) {
+        req.flash('error_messages', 'The category you want to delete dose not exist.')
+      } else {
+        req.flash('error_messages', ['Sorry, something went wrong. Please try again later.'])
+      }
+      return res.redirect('/admin/categories')
+    })
   }
 }
 

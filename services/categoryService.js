@@ -92,6 +92,36 @@ const categoryService = {
         const data = { status: 'error', statusCode: 500, message: [error.toString()], userInput, category: { id } }
         return callback(data)
       })
+  },
+
+  deleteCategory: (req, res, callback) => {
+    const id = req.params.id
+    if (!validator.isNumeric(id, { no_symbols: true })) {
+      const data = { status: 'error', statusCode: 400, message: ['Invalid category id format.'] }
+      return callback(data)
+    }
+    Category.findByPk(id)
+      .then(category => {
+        if (!category) {
+          const data = { status: 'error', statusCode: 404, message: ['Category not found.'] }
+          return callback(data)
+        }
+        category.destroy()
+          .then(() => {
+            const data = { status: 'success', statusCode: 200, message: ['Category has been successfully deleted.'] }
+            return callback(data)
+          })
+          .catch(error => {
+            console.log(error)
+            const data = { status: 'error', statusCode: 500, message: [error.toString()] }
+            return callback(data)
+          })
+      })
+      .catch(error => {
+        console.log(error)
+        const data = { status: 'error', statusCode: 500, message: [error.toString()] }
+        return callback(data)
+      })
   }
 }
 

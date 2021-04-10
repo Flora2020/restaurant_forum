@@ -17,6 +17,12 @@ const categoryController = {
     categoryService.putCategory(req, res, (data) => {
       return res.status(data.statusCode).json(data)
     })
+  },
+
+  deleteCategory: (req, res) => {
+    categoryService.deleteCategory(req, res, (data) => {
+      return res.status(data.statusCode).json(data)
+    })
   }
 }
 
