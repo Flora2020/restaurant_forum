@@ -1,19 +1,9 @@
 const validator = require('validator')
-const imgur = require('imgur-node-api')
 const adminService = require('../services/adminService')
 const db = require('../models')
 const Category = db.Category
 const Restaurant = db.Restaurant
 const User = db.User
-const IMGUR_CLIENT_ID = process.env.IMGUR_CLIENT_ID
-const uploadImg = (path) => {
-  return new Promise((resolve, reject) => {
-    imgur.upload(path, (err, img) => {
-      if (err) { return reject(err) }
-      return resolve(img)
-    })
-  })
-}
 
 const adminController = {
   getRestaurants: (req, res, next) => {
@@ -63,77 +53,44 @@ const adminController = {
     })
   },
 
-  putRestaurant: async (req, res) => {
-    const id = req.params.id
-    if (!validator.isNumeric(id, { no_symbols: true })) {
-      req.flash('error_messages', '查無此餐廳！')
-      return res.redirect('/admin/restaurants')
-    }
-
-    const { name, tel, address, opening_hours, description, categoryId } = req.body
-    const telRule = /^\([0-9]{2}\)([0-9]{4}|[0-9]{3})-[0-9]{4}$/
-    const timeRule = /^([0-1][0-9]|[2][0-3]):[0-5][0-9]/
-    const categories = await Category.findAll({ raw: true })
-    const categoryIds = categories.map(category => category.id.toString())
-    const errorMsg = []
-    const userInput = { name, tel, address, opening_hours, description, categoryId: Number(categoryId) }
-    if (!name) {
-      errorMsg.push("Name didn't exist.")
-    }
-    if (!validator.isByteLength(name, { max: 255 })) {
-      errorMsg.push('Name cannot be longer than 255 bytes.')
-    }
-    if (tel && !telRule.test(tel)) {
-      errorMsg.push('Wrong telephone number format.')
-    }
-    if (!validator.isByteLength(address, { max: 255 })) {
-      errorMsg.push('Address cannot be longer than 255 bytes.')
-    }
-    if (opening_hours && !timeRule.test(opening_hours)) {
-      errorMsg.push('Wrong opening hours format.')
-    }
-    if (!validator.isByteLength(description, { max: 65535 })) {
-      errorMsg.push('Description cannot be longer than 65535 bytes.')
-    }
-    if (!categoryIds.includes(categoryId)) {
-      errorMsg.push('No such category.')
-    }
-    if (errorMsg.length > 0) {
-      return res.render('admin/create', { errorMsg, userInput, categories, restaurant: { id } })
-    }
-
-    try {
-      const { file } = req
-      let img
-
-      if (file) {
-        const validExtensions = ['.jpg', '.jpeg', '.png']
-        const fileExtension = file.originalname.substring(file.originalname.lastIndexOf('.'))
-        if (validExtensions.indexOf(fileExtension) < 0) {
-          errorMsg.push('Only jpg jpeg png files are accepted.')
-          return res.render('admin/create', { errorMsg, userInput, categories, restaurant: { id } })
-        }
-        imgur.setClientID(IMGUR_CLIENT_ID)
-        img = await uploadImg(file.path)
+  putRestaurant: (req, res) => {
+    adminService.putRestaurant(req, res, (data) => {
+      if (data.status === 'success') {
+        req.flash('success_messages', data.message)
+        return res.redirect(`/admin/restaurants/${data.restaurant.id}`)
       }
-
-      const restaurant = await Restaurant.findByPk(id)
-      await restaurant.update({
-        name: req.body.name,
-        tel: req.body.tel,
-        address: req.body.address,
-        opening_hours: req.body.opening_hours,
-        description: req.body.description,
-        image: file ? img.data.link : restaurant.image,
-        CategoryId: req.body.categoryId
+      if (!data.restaurant) {
+        const userInput = data.userInput
+        const categoryInput = data.categories.find(category => category.id === userInput.categoryId)
+        userInput.categoryName = categoryInput ? categoryInput.name : ''
+        req.flash('error_messages', 'The restaurant you want to edit dose not exist.')
+        req.flash('error_messages',
+          ['Your inputs are as follows:',
+            `name: ${userInput.name}`,
+            `category name: ${userInput.categoryName}`,
+            `tel: ${userInput.tel}`,
+            `address: ${userInput.address}`,
+            `opening hours: ${userInput.opening_hours}`,
+            `description: ${userInput.description}`
+          ])
+        return res.redirect('/admin/restaurants')
+      }
+      if (data.statusCode === 400) {
+        return res.render('admin/create', {
+          errorMsg: data.message,
+          userInput: data.userInput,
+          categories: data.categories,
+          restaurant: data.restaurant
+        })
+      }
+      const errorMsg = ['Sorry, something went wrong. Please try again later.']
+      return res.render('admin/create', {
+        errorMsg,
+        userInput: data.userInput,
+        categories: data.categories,
+        restaurant: data.restaurant
       })
-      req.flash('success_messages', 'restaurant was successfully to update')
-      res.redirect(`/admin/restaurants/${id}`)
-    } catch (err) {
-      console.log(err)
-      errorMsg.push('Sorry, something went wrong. Please try again later.')
-      return res.render('admin/create', { errorMsg, userInput, categories, restaurant: { id } })
-    }
+    })
   },
 
   deleteRestaurant: (req, res) => {
