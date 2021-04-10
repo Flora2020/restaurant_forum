@@ -45,6 +45,53 @@ const categoryService = {
         const data = { status: 'error', statusCode: 500, message: [error.toString()], userInput }
         return callback(data)
       })
+  },
+
+  putCategory: (req, res, callback) => {
+    const id = req.params.id
+    const name = req.body.name
+    const userInput = { name }
+    const errorMsg = []
+    if (!validator.isNumeric(id, { no_symbols: true })) {
+      const data = { status: 'error', statusCode: 400, message: ['Invalid category id format.'], userInput }
+      return callback(data)
+    }
+
+    return Category.findByPk(id)
+      .then(category => {
+        if (!category) {
+          const data = { status: 'error', statusCode: 404, message: ['Category not found.'], userInput }
+          return callback(data)
+        }
+        if (!name) {
+          errorMsg.push('Please enter category name.')
+        }
+        if (!validator.isByteLength(name, { max: 255 })) {
+          errorMsg.push('Name cannot be longer than 255 bytes.')
+        }
+        if (errorMsg.length > 0) {
+          const data = {
+            status: 'error', statusCode: 400, message: errorMsg, userInput, category: { id }
+          }
+          return callback(data)
+        }
+
+        category.update({ name })
+          .then(() => {
+            const data = { status: 'success', statusCode: 200, message: ['Category has been successfully updated.'] }
+            return callback(data)
+          })
+          .catch(error => {
+            console.log(error)
+            const data = { status: 'error', statusCode: 500, message: [error.toString()], userInput, category: { id } }
+            return callback(data)
+          })
+      })
+      .catch(error => {
+        console.log(error)
+        const data = { status: 'error', statusCode: 500, message: [error.toString()], userInput, category: { id } }
+        return callback(data)
+      })
   }
 }
 

@@ -26,28 +26,24 @@ const categoryController = {
   },
 
   putCategory: (req, res) => {
-    const id = req.params.id
-    const name = req.body.name
-    if (!name) {
-      req.flash('error_messages', '請輸入分類名稱！')
-      return res.redirect('back')
-    }
-
-    return Category.findByPk(id)
-      .then(category => {
-        if (!category) {
-          req.flash('error_messages', '查無此分類！')
-          return res.redirect('back')
-        }
-        category.update({ name })
-          .then(() => {
-            return res.redirect('/admin/categories')
-          })
-          .catch(error => {
-            console.log(error)
-            return res.render('error')
-          })
-      })
+    categoryService.putCategory(req, res, (data) => {
+      req.session.userInput = data.userInput
+      if (data.status === 'success') {
+        req.flash('success_messages', data.message)
+        console.log('req.session.userInput:', req.session.userInput)
+        return res.redirect('/admin/categories')
+      }
+      if (!data.category) {
+        req.flash('error_messages', 'The category you want to edit dose not exist.')
+        return res.redirect('/admin/categories')
+      }
+      if (data.statusCode === 400) {
+        req.flash('error_messages', data.message)
+      } else {
+        req.flash('error_messages', ['Sorry, something went wrong. Please try again later.'])
+      }
+      return res.redirect(`/admin/categories/${data.category.id}`)
+    })
   },
 
   deleteCategory: (req, res) => {
