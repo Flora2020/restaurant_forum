@@ -1,3 +1,4 @@
+const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
 const validator = require('validator')
 const PasswordValidator = require('password-validator')
@@ -11,9 +12,6 @@ schema
   .has().digits()
   .has().symbols()
   .has().not().spaces()
-
-// JWT
-const jwt = require('jsonwebtoken')
 
 const userController = {
   signIn: (req, res) => {
@@ -32,7 +30,7 @@ const userController = {
       }
       // 簽發 token
       const payload = { id: user.id }
-      const token = jwt.sign(payload, process.env.JWT_SECRET)
+      const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '8h' })
       return res.json({
         status: 'success',
         message: 'ok',
