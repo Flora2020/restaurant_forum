@@ -1,9 +1,9 @@
 const categoryService = require('../../services/categoryService')
 
 const categoryController = {
-  getCategories: (req, res, next) => {
-    categoryService.getCategories(req, res, next, (data) => {
-      return res.json(data)
+  getCategories: (req, res) => {
+    categoryService.getCategories(req, res, (data) => {
+      return res.status(data.statusCode).json(data)
     })
   },
 

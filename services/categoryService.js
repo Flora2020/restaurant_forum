@@ -3,20 +3,31 @@ const db = require('../models')
 const Category = db.Category
 
 const categoryService = {
-  getCategories: async (req, res, next, callback) => {
+  getCategories: async (req, res, callback) => {
     try {
       const id = req.params.id
       let category
 
+      const categories = await Category.findAll({ raw: true, attributes: ['id', 'name'] })
+
       if (id) {
-        category = (await Category.findByPk(id)).toJSON()
+        if (!validator.isNumeric(id, { no_symbols: true })) {
+          const data = { status: 'error', statusCode: 400, message: ['Invalid category id format.'] }
+          return callback(data)
+        }
+        category = categories.find(category => category.id === Number(id))
+        if (!category) {
+          const data = { status: 'error', statusCode: 404, message: ['Category not found.'] }
+          return callback(data)
+        }
       }
 
-      const categories = await Category.findAll({ raw: true })
-      const data = { categories, category }
+      const data = { status: 'success', statusCode: 200, message: '', categories, category }
       callback(data)
     } catch (error) {
-      next(error)
+      console.log(error)
+      const data = { status: 'error', statusCode: 500, message: [error.toString()] }
+      return callback(data)
     }
   },
 

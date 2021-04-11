@@ -1,9 +1,20 @@
 const categoryService = require('../services/categoryService')
 
 const categoryController = {
-  getCategories: (req, res, next) => {
-    categoryService.getCategories(req, res, next, (data) => {
-      return res.render('admin/categories', data)
+  getCategories: (req, res) => {
+    categoryService.getCategories(req, res, (data) => {
+      if (data.status === 'success') {
+        return res.render('admin/categories', {
+          categories: data.categories,
+          category: data.category
+        })
+      }
+      if (data.statusCode < 500) {
+        req.flash('error_messages', 'The category dose not exist.')
+      } else {
+        req.flash('error_messages', ['Sorry, something went wrong. Please try again later.'])
+      }
+      return res.redirect('/admin/categories')
     })
   },
 
