@@ -33,4 +33,21 @@ passport.deserializeUser((id, cb) => {
   })
 })
 
+// JWT
+const passportJWT = require('passport-jwt')
+const ExtractJwt = passportJWT.ExtractJwt
+const JwtStrategy = passportJWT.Strategy
+
+passport.use(new JwtStrategy(
+  {
+    jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+    secretOrKey: process.env.JWT_SECRET
+  },
+  (jwtPayload, next) => {
+    User.findByPk(jwtPayload.id).then(user => {
+      if (!user) return next(null, false)
+      return next(null, user)
+    })
+  }))
+
 module.exports = passport
