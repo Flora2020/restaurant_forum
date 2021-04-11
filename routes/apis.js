@@ -20,6 +20,7 @@ const authenticatedAdmin = (req, res, next) => {
 }
 
 // anyone
+router.post('/signup', userController.signUp)
 router.post('/signin', userController.signIn)
 
 // user

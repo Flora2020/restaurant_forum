@@ -1,6 +1,16 @@
 const bcrypt = require('bcryptjs')
+const validator = require('validator')
+const PasswordValidator = require('password-validator')
 const db = require('../../models')
 const User = db.User
+
+const schema = new PasswordValidator()
+schema
+  .has().uppercase()
+  .has().lowercase()
+  .has().digits()
+  .has().symbols()
+  .has().not().spaces()
 
 // JWT
 const jwt = require('jsonwebtoken')
@@ -32,6 +42,58 @@ const userController = {
         }
       })
     })
+  },
+
+  signUp: (req, res) => {
+    const { name, email, password, passwordCheck } = req.body
+    const userInput = { name, email }
+    const errorMsg = []
+    if (!validator.isByteLength(name, { max: 255 })) {
+      errorMsg.push('Name cannot be longer than 255 bytes.')
+    }
+    if (!email || !password || !passwordCheck) {
+      errorMsg.push('Please fill in all required fields.')
+    }
+    if (!validator.isEmail(email)) {
+      errorMsg.push('Invalid email format.')
+    }
+    if (!validator.isByteLength(email, { max: 255 })) {
+      errorMsg.push('Email cannot be longer than 255 bytes.')
+    }
+    if (passwordCheck !== password) {
+      errorMsg.push('Password and passwordCheck do not match.')
+    }
+    if (!validator.isByteLength(password, { min: 8, max: 255 })) {
+      errorMsg.push('Length of password should be 8 to 255 bytes.')
+    }
+    if (!schema.validate(password)) {
+      errorMsg.push('Password should contain lowercase letter, uppercase letter, number and symbol.')
+    }
+    if (errorMsg.length > 0) {
+      return res.status(400).json({ status: 'error', message: errorMsg, userInput })
+    }
+    User.findOne({ where: { email } })
+      .then(user => {
+        if (user) {
+          return res.status(400).json({ status: 'error', message: 'This email is already taken, please use another email.', userInput })
+        }
+        User.create({
+          name: name || 'Anonymous',
+          email,
+          password: bcrypt.hashSync(password, bcrypt.genSaltSync(10), null)
+        })
+          .then(user => {
+            return res.status(200).json({ status: 'success', message: 'You have successfully signed up.' })
+          })
+          .catch(error => {
+            console.log(error)
+            return res.status(500).json({ status: 'error', statusCode: 500, message: [error.toString()], userInput })
+          })
+      })
+      .catch(error => {
+        console.log(error)
+        return res.status(500).json({ status: 'error', statusCode: 500, message: [error.toString()], userInput })
+      })
   }
 }
 
